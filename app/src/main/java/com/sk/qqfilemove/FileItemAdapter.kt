@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.file_item.view.*
 
 class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
-    var datas: List<FilesInfo> = mutableListOf();
+    var datas: MutableList<FilesInfo> = mutableListOf();
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileItemViewHolder {
         var holder:FileItemViewHolder  = FileItemViewHolder(
                 LayoutInflater.from(parent.context).inflate(
@@ -58,7 +58,7 @@ class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
         listener = selectAllCheck
     }
 
-    fun setData(datas: List<FilesInfo>) {
+    fun setData(datas: MutableList<FilesInfo>) {
         this.datas = datas
         checkAllSelect()
         notifyDataSetChanged()
