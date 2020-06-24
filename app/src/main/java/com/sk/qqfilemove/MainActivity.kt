@@ -23,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     var TIMPath = ""
     var outQQPath = ""
     var progressDialogFragment: ProgressDialogFragment? = null
+    var qqScan = true
+    var timScan = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -162,7 +164,11 @@ class MainActivity : AppCompatActivity() {
             for (data in adapter.datas) {
                 if (data.isInQQFile) {
                     if (data.select) {
-                        if (!moveFile(data)) {
+                        if (!moveFile(data, {
+                                runOnUiThread {
+                                    progressDialogFragment?.setProgress(it)
+                                }
+                            })) {
                             runOnUiThread {
                                 Toast.makeText(this, "移动出错", Toast.LENGTH_SHORT).show()
                                 progressDialogFragment?.dismiss()
@@ -196,10 +202,10 @@ class MainActivity : AppCompatActivity() {
                             progressDialogFragment?.dismiss()
                         }
                     }
-                }else{
+                } else {
                     undeleteFiles.add(data)
                 }
-            }else{
+            } else {
                 undeleteFiles.add(data)
             }
         }
@@ -242,47 +248,48 @@ class MainActivity : AppCompatActivity() {
         var QQOutFilePath = File(outQQPath)
         if (!QQFilePath.exists()) {
             refreshLayout.finishRefresh()
-            return
+            qqScan = false
         }
-        if (QQFilePath.listFiles() == null) {
-            refreshLayout.finishRefresh()
-            return
-        }
+
         if (!TIMFilePath.exists()) {
             refreshLayout.finishRefresh()
-            return
+            timScan = false
         }
         if (TIMFilePath.listFiles() == null) {
             refreshLayout.finishRefresh()
-            return
+            timScan = false
         }
         if (QQOutFilePath.listFiles() == null) {
             refreshLayout.finishRefresh()
-            return
+            qqScan = false
         }
         Thread({
             if (!File(outQQPath).exists()) {
                 File(outQQPath).mkdirs()
             }
-            for (data in QQFilePath.listFiles()) {
-                if (data.name.startsWith(".")) {
-                    continue
+            if (qqScan) {
+                for (data in QQFilePath.listFiles()) {
+                    if (data.name.startsWith(".")) {
+                        continue
+                    }
+                    var filesInfo = FilesInfo()
+                    filesInfo.isInQQFile = true
+                    filesInfo.fileName = data.name
+                    filesInfo.filePath = data.absolutePath
+                    datas.add(filesInfo)
                 }
-                var filesInfo = FilesInfo()
-                filesInfo.isInQQFile = true
-                filesInfo.fileName = data.name
-                filesInfo.filePath = data.absolutePath
-                datas.add(filesInfo)
             }
-            for (data in TIMFilePath.listFiles()) {
-                if (data.name.startsWith(".")) {
-                    continue
+            if (timScan) {
+                for (data in TIMFilePath.listFiles()) {
+                    if (data.name.startsWith(".")) {
+                        continue
+                    }
+                    var filesInfo = FilesInfo()
+                    filesInfo.isInQQFile = true
+                    filesInfo.fileName = data.name
+                    filesInfo.filePath = data.absolutePath
+                    datas.add(filesInfo)
                 }
-                var filesInfo = FilesInfo()
-                filesInfo.isInQQFile = true
-                filesInfo.fileName = data.name
-                filesInfo.filePath = data.absolutePath
-                datas.add(filesInfo)
             }
             for (data in QQOutFilePath.listFiles()) {
                 var filesInfo = FilesInfo()
@@ -321,6 +328,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun copyFile(path: FilesInfo, onProgress: (progress: Int) -> Unit): Boolean {
+        try {
+            var outPath = outQQPath + path.fileName
+            if (File(outPath).exists()) {
+                outPath = outQQPath + System.currentTimeMillis() + path.fileName
+            }
+            var streamFrom: InputStream = FileInputStream(path.filePath)
+            var streamTo: OutputStream =
+                FileOutputStream(outPath)
+            var buffer = ByteArray(1024)
+            var len: Int
+            while (streamFrom.read(buffer).also { len = it } > 0) {
+                streamTo.write(buffer, 0, len);
+                onProgress(((File(outPath).length().toFloat() / File(path.filePath).length()) * 100).toInt())
+            }
+            streamFrom.close();
+            streamTo.close();
+            path.fileName = outPath.replace(outQQPath, "")
+            return true
+        } catch (ex: Exception) {
+            return false
+        }
+    }
+
     /**
      * 移动文件目录到某一路径下
      * @param srcFile
@@ -330,6 +361,22 @@ class MainActivity : AppCompatActivity() {
     fun moveFile(path: FilesInfo): Boolean {
         //复制后删除原目录
         if (copyFile(path)) {
+            File(path.filePath).delete()
+            path.filePath = outQQPath + path.fileName
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 移动文件目录到某一路径下
+     * @param srcFile
+     * @param destDir
+     * @return
+     */
+    fun moveFile(path: FilesInfo, onProgress: (progress: Int) -> Unit): Boolean {
+        //复制后删除原目录
+        if (copyFile(path, onProgress)) {
             File(path.filePath).delete()
             path.filePath = outQQPath + path.fileName
             return true

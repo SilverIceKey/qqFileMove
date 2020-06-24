@@ -9,12 +9,15 @@ import kotlinx.android.synthetic.main.file_item.view.*
 class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
     var datas: MutableList<FilesInfo> = mutableListOf();
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileItemViewHolder {
-        var holder:FileItemViewHolder  = FileItemViewHolder(
-                LayoutInflater.from(parent.context).inflate(
-                    R.layout.file_item,
-                    null
-                ))
-        holder.itemView.setOnClickListener { holder.itemView.selectcb.isChecked = !holder.itemView.selectcb.isChecked }
+        var holder: FileItemViewHolder = FileItemViewHolder(
+            LayoutInflater.from(parent.context).inflate(
+                R.layout.file_item,
+                null
+            )
+        )
+        holder.itemView.setOnClickListener {
+            holder.itemView.selectcb.isChecked = !holder.itemView.selectcb.isChecked
+        }
         return holder;
     }
 
@@ -36,7 +39,13 @@ class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
             holder.itemView.selectcb.setOnCheckedChangeListener { buttonView, isChecked -> }
             holder.itemView.selectcb.visibility = View.INVISIBLE
         }
-        holder.itemView.filename.text = datas[position].fileName
+
+        holder.itemView.filename.text =
+            if (datas[position].fileName.length > 20) datas[position].fileName.replaceRange(
+                20,
+                datas[position].fileName.lastIndexOf("."),
+                ""
+            ) else datas[position].fileName
     }
 
     fun checkAllSelect() {
@@ -50,7 +59,7 @@ class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
                 noInQQFile = true
             }
         }
-        listener?.let { it(hasNoSelect&&noInQQFile) }
+        listener?.let { it(hasNoSelect && noInQQFile) }
     }
 
     var listener: ((Boolean) -> Unit)? = null
