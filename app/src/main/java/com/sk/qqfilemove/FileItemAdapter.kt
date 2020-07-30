@@ -41,11 +41,7 @@ class FileItemAdapter : RecyclerView.Adapter<FileItemViewHolder>() {
         }
 
         holder.itemView.filename.text =
-            if (datas[position].fileName.length > 20) datas[position].fileName.replaceRange(
-                20,
-                datas[position].fileName.lastIndexOf("."),
-                ""
-            ) else datas[position].fileName
+            if (datas[position].fileName.length > 20) datas[position].fileName.substring(0,20) else datas[position].fileName
     }
 
     fun checkAllSelect() {
